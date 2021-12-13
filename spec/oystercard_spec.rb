@@ -19,4 +19,30 @@ describe Oystercard do
     subject.deduct(5) 
     expect(subject.balance).to eq -5
   end
+  
+  describe "#touch_in" do
+    it "can touch in" do
+      subject.topup(Oystercard::DEFAULT_MINIMUM)
+      subject.touch_in 
+      expect(subject).to be_in_journey
+    end
+
+
+    it "raises an error if balance is too low" do
+      allow(subject).to receive(:balance) {Oystercard::DEFAULT_MINIMUM - 0.01}
+      expect { subject.touch_in }.to  raise_error "Sorry, minimum balance #{Oystercard::DEFAULT_MINIMUM}"
+    end
+  end
+
+  describe "#touch_out" do
+    it "can touch out" do
+      subject.touch_out
+      expect(subject).to_not be_in_journey
+    end
+
+    it "reduces by #{Oystercard::DEFAULT_MINIMUM}" do
+      expect { subject.touch_out }.to change{ subject.balance }.by(-Oystercard::DEFAULT_MINIMUM)
+    end
+  end
+
 end
