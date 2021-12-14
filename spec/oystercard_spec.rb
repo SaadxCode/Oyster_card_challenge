@@ -21,28 +21,65 @@ describe Oystercard do
   end
   
   describe "#touch_in" do
+     
+    let(:entry_station){ double :station }
+
     it "can touch in" do
       subject.topup(Oystercard::DEFAULT_MINIMUM)
-      subject.touch_in 
+      subject.touch_in(entry_station)
       expect(subject).to be_in_journey
     end
 
 
     it "raises an error if balance is too low" do
       allow(subject).to receive(:balance) {Oystercard::DEFAULT_MINIMUM - 0.01}
-      expect { subject.touch_in }.to  raise_error "Sorry, minimum balance #{Oystercard::DEFAULT_MINIMUM}"
+      expect { subject.touch_in(entry_station) }.to  raise_error "Sorry, minimum balance #{Oystercard::DEFAULT_MINIMUM}"
     end
+
+    it 'stores entry station' do
+      subject.topup(10)
+      subject.touch_in(entry_station)
+      expect(subject.entry_station).to eq entry_station
+    end 
   end
 
   describe "#touch_out" do
+    
+    let(:entry_station){ double :station }
+    let(:exit_station) {double :station}
+
     it "can touch out" do
-      subject.touch_out
+      subject.touch_out(exit_station)
       expect(subject).to_not be_in_journey
     end
 
-    it "reduces by #{Oystercard::DEFAULT_MINIMUM}" do
-      expect { subject.touch_out }.to change{ subject.balance }.by(-Oystercard::DEFAULT_MINIMUM)
+    it "store exit station" do
+      subject.topup(10)
+      subject.touch_in(entry_station)
+      subject.touch_out(exit_station)
+      expect(subject.exit_station).to eq exit_station
     end
+
+    it "reduces by #{Oystercard::DEFAULT_MINIMUM}" do
+      expect { subject.touch_out(exit_station) }.to change{ subject.balance }.by(-Oystercard::DEFAULT_MINIMUM)
+    end
+  end
+
+  describe "#journeys" do
+    
+    let(:journey){ {entry_station: entry_station, exit_station: exit_station} }    
+
+    it "had an empty list of journeys by default" do
+      expect(subject.journeys).to be_empty
+    end
+
+    it 'stores a journey' do
+      subject.topup(10)
+      subject.touch_in(entry_station)
+      subject.touch_out(exit_station)
+      expect(subject.journeys).to include journey
+    end
+
   end
 
 end
